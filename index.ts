@@ -506,22 +506,95 @@ export interface InstanceCount {
  *
  * @param token - API token for authentication
  * @param resources - Resource IDs to query (service IDs, Postgres IDs, or Redis IDs).
- * @param startTime - Epoch/Unix timestamp of start of time range to return. Defaults to now() - 1 hour.
- * @param endTime - Epoch/Unix timestamp of end of time range to return. Defaults to now().
+ * @param startTime - timestamp of start of time range to return. Defaults to now() - 1 hour. Example: 2021-06-17T08:30:30Z
+ * @param endTime - timestamp of end of time range to return. Defaults to now(). Example: 2021-06-17T08:30:30Z
  * @param resolutionSeconds - The resolution of the returned data in seconds. Must be ≥ 30. Defaults to 60.
  * @returns Promise resolving to an array of InstanceCount objects
  */
 export async function instanceCount(
   token: string,
   resources: ScalingResourceID[],
-  startTime?: number,
-  endTime?: number,
+  startTime?: string,
+  endTime?: string,
   resolutionSeconds?: number,
 ) {
   return (await renderGet(token, `metrics/instance-count`, {
-    endTime: endTime?.toString(),
+    endTime: endTime,
     resolutionSeconds: resolutionSeconds?.toString(),
     resource: resources as string[],
-    startTime: startTime?.toString(),
+    startTime: startTime,
   })) as InstanceCount[];
+}
+
+export interface CpuUsage {
+  labels: { value: ScalingResourceID }[];
+  values: { timestamp: string; value: number }[];
+  unit: string;
+}
+
+/** Return CPU usage metrics for a service
+ *
+ * @see https://api-docs.render.com/reference/get-cpu-usage
+ *
+ * @param token - API token for authentication
+ * @param resources - Resource IDs to query (service IDs, Postgres IDs, or Redis IDs)
+ * @param startTime - timestamp of start of time range to return. Defaults to now() - 1 hour. Example: 2021-06-17T08:30:30Z
+ * @param endTime - timestamp of end of time range to return. Defaults to now(). Example: 2021-06-17T08:30:30Z
+ * @param resolutionSeconds - The resolution of the returned data in seconds. Must be ≥ 30. Defaults to 60.
+ * @param instances - Instance IDs to query. When multiple instance IDs are provided, they are ORed together.
+ * @param aggregationMethod - The aggregation method to apply to multiple time series.
+ * @returns Promise resolving to an array of CpuUsage objects
+ */
+export async function cpuUsage(
+  token: string,
+  resources: ScalingResourceID[],
+  startTime?: string,
+  endTime?: string,
+  resolutionSeconds?: number,
+  instances?: string[],
+  aggregationMethod?: string,
+) {
+  return (await renderGet(token, `metrics/cpu`, {
+    endTime: endTime,
+    resolutionSeconds: resolutionSeconds?.toString(),
+    resource: resources as string[],
+    startTime: startTime,
+    instance: instances,
+    aggregationMethod: aggregationMethod,
+  })) as CpuUsage[];
+}
+
+export interface MemoryUsage {
+  labels: { value: ScalingResourceID }[];
+  values: { timestamp: string; value: number }[];
+  unit: string;
+}
+
+/** Return memory usage metrics for a service
+ *
+ * @see https://api-docs.render.com/reference/get-memory-usage
+ *
+ * @param token - API token for authentication
+ * @param resources - Resource IDs to query (service IDs, Postgres IDs, or Redis IDs)
+ * @param startTime - timestamp of start of time range to return. Defaults to now() - 1 hour. Example: 2021-06-17T08:30:30Z
+ * @param endTime - timestamp of end of time range to return. Defaults to now(). Example: 2021-06-17T08:30:30Z
+ * @param resolutionSeconds - The resolution of the returned data in seconds. Must be ≥ 30. Defaults to 60.
+ * @param instances - Instance IDs to query. When multiple instance IDs are provided, they are ORed together.
+ * @returns Promise resolving to an array of MemoryUsage objects
+ */
+export async function memoryUsage(
+  token: string,
+  resources: ScalingResourceID[],
+  startTime?: string,
+  endTime?: string,
+  resolutionSeconds?: number,
+  instances?: string[],
+) {
+  return (await renderGet(token, `metrics/memory`, {
+    endTime: endTime,
+    resolutionSeconds: resolutionSeconds?.toString(),
+    resource: resources as string[],
+    startTime: startTime,
+    instance: instances,
+  })) as MemoryUsage[];
 }
