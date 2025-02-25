@@ -34,6 +34,8 @@ jobs:
       - name: Build package
         run: npm run build
 
+      # granular access token expires feb 27, 2026
+      # https://www.npmjs.com/settings/llimllib/tokens/
       - name: Publish to NPM
         run: npm publish
         env:
