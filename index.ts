@@ -118,24 +118,18 @@ export async function renderGet(
       {} as Record<string, string | string[]>,
     );
 
-  // Build URL with support for array parameters
-  const queryString = Object.entries(filteredParams)
-    .map(([key, value]) => {
-      if (Array.isArray(value)) {
-        // For arrays, create multiple parameters with the same key
-        return value
-          .map(
-            (item) => `${encodeURIComponent(key)}=${encodeURIComponent(item)}`,
-          )
-          .join("&");
-      } else {
-        // For regular strings, create a single parameter
-        return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
-      }
-    })
-    .join("&");
+  const searchParams = new URLSearchParams();
 
-  const url = `${RENDER_API}/${method}?${queryString}`;
+  Object.entries(filteredParams).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      // join array values with comma and add as a single parameter
+      searchParams.append(key, value.join(","));
+    } else {
+      searchParams.append(key, value);
+    }
+  });
+
+  const url = `${RENDER_API}/${method}?${searchParams.toString()}`;
 
   debug("fetching", url);
   const res = await fetch(url, {
@@ -508,7 +502,14 @@ export interface InstanceCount {
 
 /** Return instance count metrics for a service
  *
- * https://api-docs.render.com/reference/get-instance-count
+ * @see https://api-docs.render.com/reference/get-instance-count
+ *
+ * @param token - API token for authentication
+ * @param resources - Resource IDs to query (service IDs, Postgres IDs, or Redis IDs).
+ * @param startTime - Epoch/Unix timestamp of start of time range to return. Defaults to now() - 1 hour.
+ * @param endTime - Epoch/Unix timestamp of end of time range to return. Defaults to now().
+ * @param resolutionSeconds - The resolution of the returned data in seconds. Must be ≥ 30. Defaults to 60.
+ * @returns Promise resolving to an array of InstanceCount objects
  */
 export async function instanceCount(
   token: string,
@@ -520,7 +521,7 @@ export async function instanceCount(
   return (await renderGet(token, `metrics/instance-count`, {
     endTime: endTime?.toString(),
     resolutionSeconds: resolutionSeconds?.toString(),
-    resources: resources as string[],
+    resource: resources as string[],
     startTime: startTime?.toString(),
   })) as InstanceCount[];
 }
