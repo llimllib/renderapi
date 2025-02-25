@@ -1,5 +1,5 @@
 {
-  "name": "renderapi",
+  "name": "@llimllib/renderapi",
   "version": "0.0.1",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -32,5 +32,8 @@
   "devDependencies": {
     "@types/debug": "^4.1.12",
     "typescript": "^5.7.3"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
