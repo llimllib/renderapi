@@ -1,4 +1,3 @@
-/* eslint-disable no-await-in-loop, no-constant-condition, no-param-reassign */
 import { debug as Debug } from "debug";
 
 const debug = Debug("renderapi");
@@ -18,11 +17,11 @@ const RENDER_API = "https://api.render.com/v1";
  * @param params - an object containing GET parameters to pass
  * @returns a list of all objects in all pages of the response
  * */
-export async function renderGetPaged(
+export async function renderGetPaged<T = unknown>(
   token: string,
   method: string,
   params: Record<string, string | undefined> = {},
-): Promise<any[]> {
+): Promise<T[]> {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
   if (token) {
@@ -43,7 +42,7 @@ export async function renderGetPaged(
       {} as Record<string, string>,
     );
 
-  let objects: any[] = [];
+  let objects: T[] = [];
 
   // fetch results until there are no more results, then return all objects
   while (true) {
@@ -87,11 +86,11 @@ export async function renderGetPaged(
  * @param params - an object containing GET parameters to pass
  * @returns a list of all objects in all pages of the response
  * */
-export async function renderGet(
+export async function renderGet<T = unknown>(
   token: string,
   method: string,
   params: Record<string, string | string[] | undefined> = {},
-): Promise<any> {
+): Promise<T> {
   const headers = new Headers();
   headers.append("Content-Type", "application/json");
   if (token) {
@@ -216,10 +215,10 @@ export interface StaticSiteDetails {
 }
 
 // TODO
-export type WebServiceDetails = any;
-export type BackgroundJobDetails = any;
-export type CronJobDetails = any;
-export type PrivateServiceDetails = any;
+export type WebServiceDetails = unknown;
+export type BackgroundJobDetails = unknown;
+export type CronJobDetails = unknown;
+export type PrivateServiceDetails = unknown;
 
 /** return a serviceID if the string is of ServiceID format */
 export function isServiceID(s: string): s is ServiceID {
@@ -314,7 +313,7 @@ export async function getService(
   token: string,
   serviceID: ServiceID,
 ): Promise<Service> {
-  return renderGet(token, `/services/${serviceID}`);
+  return renderGet<Service>(token, `/services/${serviceID}`);
 }
 
 /** return a list of Services.
@@ -329,10 +328,7 @@ export async function getServices(
   token: string,
   nameFilter: string = "",
 ): Promise<Service[]> {
-  const serviceObjs = (await renderGetPaged(
-    token,
-    "services",
-  )) as ServiceCursor[];
+  const serviceObjs = await renderGetPaged<ServiceCursor>(token, "services");
   let services = serviceObjs.map((s) => s.service);
   if (nameFilter !== "") {
     services = services.filter((s) => s.name.match(nameFilter));
@@ -377,10 +373,7 @@ export async function getEnvVarsForService(
   serviceId: ServiceID,
 ): Promise<EnvVar[]> {
   return (
-    (await renderGetPaged(
-      token,
-      `services/${serviceId}/env-vars`,
-    )) as EnvVarCursor[]
+    await renderGetPaged<EnvVarCursor>(token, `services/${serviceId}/env-vars`)
   ).map((e) => e.envVar);
 }
 export function isEnvironmentGroupID(s: string): s is EnvironmentGroupID {
@@ -412,7 +405,7 @@ export async function getEnvGroups(
   nameFilter: string = "",
 ): Promise<EnvGroup[]> {
   let envGroups = (
-    (await renderGetPaged(token, "env-groups")) as EnvGroupCursor[]
+    await renderGetPaged<EnvGroupCursor>(token, "env-groups")
   ).map((e) => e.envGroup);
   if (nameFilter !== "") {
     envGroups = envGroups.filter((e) => e.name.match(nameFilter));
@@ -428,7 +421,7 @@ export async function getEnvGroup(
   token: string,
   envGroupID: EnvironmentGroupID,
 ): Promise<EnvGroupDetails> {
-  return renderGet(token, `env-groups/${envGroupID}`);
+  return renderGet<EnvGroupDetails>(token, `env-groups/${envGroupID}`);
 }
 
 export function isRegistryCredentialID(s: string): s is EnvironmentGroupID {
@@ -455,10 +448,10 @@ export async function getRegistryCredentials(
   token: string,
   filter: string = "",
 ): Promise<RegistryCredential[]> {
-  let credentials = (await renderGet(
+  let credentials = await renderGet<RegistryCredential[]>(
     token,
     "registrycredentials",
-  )) as RegistryCredential[];
+  );
   if (filter !== "") {
     credentials = credentials.filter((c) => c.name.match(filter));
   }
@@ -489,15 +482,25 @@ export async function listJobs(
   itemId: CronID | ServiceID,
 ): Promise<Job[]> {
   return (
-    (await renderGetPaged(token, `services/${itemId}/jobs`)) as JobCursor[]
+    await renderGetPaged<JobCursor>(token, `services/${itemId}/jobs`)
   ).map((e) => e.job);
 }
 
 export type ScalingResourceID = ServiceID | RedisID | PostgresID;
 
-export interface InstanceCount {
-  labels: { value: ScalingResourceID }[];
-  values: { timestamp: string; value: number }[];
+export interface MetricLabel {
+  field: string;
+  value: string;
+}
+
+export interface MetricValue {
+  timestamp: string;
+  value: number;
+}
+
+export interface MetricResponse {
+  labels: MetricLabel[];
+  values: MetricValue[];
   unit: string; // "unitless"
 }
 
@@ -519,18 +522,12 @@ export async function instanceCount(
   endTime?: string,
   resolutionSeconds?: number,
 ) {
-  return (await renderGet(token, `metrics/instance-count`, {
+  return renderGet<MetricResponse[]>(token, `metrics/instance-count`, {
     endTime: endTime,
     resolutionSeconds: resolutionSeconds?.toString(),
     resource: resources as string[],
     startTime: startTime,
-  })) as InstanceCount[];
-}
-
-export interface CpuUsage {
-  labels: { value: ScalingResourceID }[];
-  values: { timestamp: string; value: number }[];
-  unit: string;
+  });
 }
 
 /** Return CPU usage metrics for a service
@@ -555,20 +552,14 @@ export async function cpuUsage(
   instances?: string[],
   aggregationMethod?: string,
 ) {
-  return (await renderGet(token, `metrics/cpu`, {
+  return renderGet<MetricResponse[]>(token, `metrics/cpu`, {
     endTime: endTime,
     resolutionSeconds: resolutionSeconds?.toString(),
     resource: resources as string[],
     startTime: startTime,
     instance: instances,
     aggregationMethod: aggregationMethod,
-  })) as CpuUsage[];
-}
-
-export interface MemoryUsage {
-  labels: { value: ScalingResourceID }[];
-  values: { timestamp: string; value: number }[];
-  unit: string;
+  });
 }
 
 /** Return memory usage metrics for a service
@@ -591,11 +582,11 @@ export async function memoryUsage(
   resolutionSeconds?: number,
   instances?: string[],
 ) {
-  return (await renderGet(token, `metrics/memory`, {
+  return await renderGet<MetricResponse[]>(token, `metrics/memory`, {
     endTime: endTime,
     resolutionSeconds: resolutionSeconds?.toString(),
     resource: resources as string[],
     startTime: startTime,
     instance: instances,
-  })) as MemoryUsage[];
+  });
 }
