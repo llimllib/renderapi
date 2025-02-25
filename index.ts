@@ -498,6 +498,7 @@ export type ScalingResourceID = ServiceID | RedisID | PostgresID;
 export interface InstanceCount {
   labels: { value: ScalingResourceID }[];
   values: { timestamp: string; value: number }[];
+  unit: string; // "unitless"
 }
 
 /** Return instance count metrics for a service
