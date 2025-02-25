@@ -1,0 +1,36 @@
+{
+  "name": "renderapi",
+  "version": "0.0.1",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:clean && npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:clean": "rm -rf dist",
+    "build:esm": "tsc --outDir dist/esm --module ESNext",
+    "build:cjs": "tsc --outDir dist/cjs --module CommonJS",
+    "build:types": "tsc --declaration --declarationDir dist/types --emitDeclarationOnly",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [],
+  "author": "Bill Mill",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "debug": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "typescript": "^5.7.3"
+  }
+}
