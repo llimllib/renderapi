@@ -241,13 +241,13 @@ export function isJobID(s: string): s is JobID {
 }
 export type JobID = `job-${string}`;
 
-export function isRedisID(s: string): s is JobID {
-  return s.startsWith("job-");
+export function isRedisID(s: string): s is RedisID {
+  return s.startsWith("red-");
 }
 export type RedisID = `red-${string}`;
 
-export function isPostgresID(s: string): s is JobID {
-  return s.startsWith("job-");
+export function isPostgresID(s: string): s is PostgresID {
+  return s.startsWith("dpg-");
 }
 export type PostgresID = `dpg-${string}`;
 
