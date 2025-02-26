@@ -633,3 +633,26 @@ export async function activeConnections(
     },
   );
 }
+
+/** Return bandwidth usage metrics for any Render.com service
+ *
+ * @see https://api-docs.render.com/reference/get-bandwidth
+ *
+ * @param token - API token for authentication
+ * @param resources - Resource IDs to query (any service IDs)
+ * @param startTime - timestamp of start of time range to return. Defaults to now() - 1 hour. Example: 2021-06-17T08:30:30Z
+ * @param endTime - timestamp of end of time range to return. Defaults to now(). Example: 2021-06-17T08:30:30Z
+ * @returns Promise resolving to an array of metric response objects
+ */
+export async function bandwidth(
+  token: string,
+  resources: string[],
+  startTime?: string,
+  endTime?: string,
+) {
+  return await renderGet<MetricResponse[]>(token, `metrics/bandwidth`, {
+    endTime: endTime,
+    resource: resources,
+    startTime: startTime,
+  });
+}
