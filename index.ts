@@ -658,7 +658,7 @@ export async function bandwidth(
 
   return await renderGet<MetricResponse[]>(token, `metrics/bandwidth`, {
     endTime,
-    resource: resources,
+    resource: validResources,
     startTime,
   });
 }
