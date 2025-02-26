@@ -635,7 +635,7 @@ export async function activeConnections(
  * @see https://api-docs.render.com/reference/get-bandwidth
  *
  * @param token - API token for authentication
- * @param resources - Resource IDs to query (any service IDs)
+ * @param resources - Resource IDs to query. Only web services are valid
  * @param startTime - timestamp of start of time range to return. Defaults to now() - 1 hour. Example: 2021-06-17T08:30:30Z
  * @param endTime - timestamp of end of time range to return. Defaults to now(). Example: 2021-06-17T08:30:30Z
  * @returns Promise resolving to an array of metric response objects
@@ -646,6 +646,16 @@ export async function bandwidth(
   startTime?: string,
   endTime?: string,
 ) {
+  // This call is (I think!) only valid for web services. Waiting on
+  // confirmation from render
+  const validResources = resources.filter((id) => isServiceID(id));
+
+  // log any skipped IDs to the debug log
+  const skippedResources = resources.filter((id) => !isServiceID(id));
+  if (skippedResources.length > 0) {
+    debug("skipping resources:", skippedResources);
+  }
+
   return await renderGet<MetricResponse[]>(token, `metrics/bandwidth`, {
     endTime,
     resource: resources,
