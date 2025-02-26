@@ -97,10 +97,6 @@ export async function renderGet<T = unknown>(
     headers.append("Authorization", `Bearer ${token}`);
   }
 
-  if (!params.limit) {
-    params.limit = "100";
-  }
-
   // remove undefined params and empty arrays, this lets our callers have a nicer API
   const filteredParams: Record<string, string | string[]> = Object.entries(
     params,
