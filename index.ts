@@ -56,7 +56,7 @@ export async function renderGetPaged<T = unknown>(
     if (!res.ok) {
       const errorBody = await res.text();
       throw new Error(
-        `Unable to fetch data from render ${res.statusText} ${process.env.RENDER_API_KEY}:\n${errorBody}`,
+        `Unable to fetch data from render ${res.statusText}\nurl: ${url}\napi key: *****${token.slice(-6)}\n${errorBody}`,
       );
     }
 
@@ -138,7 +138,7 @@ export async function renderGet<T = unknown>(
   if (!res.ok) {
     const errorBody = await res.text();
     throw new Error(
-      `Unable to fetch data from render ${res.statusText} ${process.env.RENDER_API_KEY}:\n${errorBody}`,
+      `Unable to fetch data from render ${res.statusText}\nurl: ${url}\napi key: *****${token.slice(-6)}\n${errorBody}`,
     );
   }
 
@@ -175,7 +175,7 @@ export async function renderPost<T>(
   if (!res.ok) {
     const errorBody = await res.text();
     throw new Error(
-      `Unable to fetch data from render ${res.statusText} ${process.env.RENDER_API_KEY}:\n${errorBody}`,
+      `Unable to fetch post data from render ${res.statusText}\nurl: ${url}\napi key: *****${token.slice(-6)}\n${errorBody}`,
     );
   }
 
