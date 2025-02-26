@@ -523,10 +523,10 @@ export async function instanceCount(
   resolutionSeconds?: number,
 ) {
   return renderGet<MetricResponse[]>(token, `metrics/instance-count`, {
-    endTime: endTime,
+    endTime,
     resolutionSeconds: resolutionSeconds?.toString(),
     resource: resources as string[],
-    startTime: startTime,
+    startTime,
   });
 }
 
@@ -553,12 +553,12 @@ export async function cpuUsage(
   aggregationMethod?: string,
 ) {
   return renderGet<MetricResponse[]>(token, `metrics/cpu`, {
-    endTime: endTime,
+    aggregationMethod: aggregationMethod,
+    endTime,
+    instance: instances,
     resolutionSeconds: resolutionSeconds?.toString(),
     resource: resources as string[],
-    startTime: startTime,
-    instance: instances,
-    aggregationMethod: aggregationMethod,
+    startTime,
   });
 }
 
@@ -583,10 +583,10 @@ export async function memoryUsage(
   instances?: string[],
 ) {
   return await renderGet<MetricResponse[]>(token, `metrics/memory`, {
-    endTime: endTime,
+    endTime,
     resolutionSeconds: resolutionSeconds?.toString(),
     resource: resources as string[],
-    startTime: startTime,
+    startTime,
     instance: instances,
   });
 }
@@ -626,10 +626,10 @@ export async function activeConnections(
     token,
     `metrics/active-connections`,
     {
-      endTime: endTime,
+      endTime,
       resolutionSeconds: resolutionSeconds?.toString(),
       resource: validResources,
-      startTime: startTime,
+      startTime,
     },
   );
 }
@@ -651,8 +651,76 @@ export async function bandwidth(
   endTime?: string,
 ) {
   return await renderGet<MetricResponse[]>(token, `metrics/bandwidth`, {
-    endTime: endTime,
+    endTime,
     resource: resources,
-    startTime: startTime,
+    startTime,
+  });
+}
+
+/** Return HTTP latency metrics for any Render.com service
+ *
+ * @see https://api-docs.render.com/reference/get-http-latency
+ *
+ * @param token - API token for authentication
+ * @param resources - Resource IDs to query (any service IDs)
+ * @param quantile - the quantile latency to fetch. Example: "0.99"
+ * @param hosts - The hosts of HTTP requests to filter to
+ * @param startTime - timestamp of start of time range to return. Defaults to now() - 1 hour. Example: 2021-06-17T08:30:30Z
+ * @param endTime - timestamp of end of time range to return. Defaults to now(). Example: 2021-06-17T08:30:30Z
+ * @param paths - The paths of HTTP requests to filter to
+ * @returns Promise resolving to an array of metric response objects
+ */
+export async function HTTPLatency(
+  token: string,
+  resources: string[],
+  quantile: string,
+  hosts?: string[],
+  startTime?: string,
+  endTime?: string,
+  paths?: string[],
+  resolutionSeconds?: number,
+) {
+  return await renderGet<MetricResponse[]>(token, `metrics/http-latency`, {
+    endTime,
+    host: hosts,
+    path: paths,
+    quantile,
+    resolutionSeconds: resolutionSeconds?.toString(),
+    resource: resources,
+    startTime,
+  });
+}
+
+/** Return HTTP request count metrics for any Render.com service
+ *
+ * @see https://api-docs.render.com/reference/get-http-requests
+ *
+ * @param token - API token for authentication
+ * @param resources - Resource IDs to query (any service IDs)
+ * @param hosts - The hosts of HTTP requests to filter to
+ * @param startTime - timestamp of start of time range to return. Defaults to now() - 1 hour. Example: 2021-06-17T08:30:30Z
+ * @param endTime - timestamp of end of time range to return. Defaults to now(). Example: 2021-06-17T08:30:30Z
+ * @param paths - The paths of HTTP requests to filter to
+ * @param aggregateBy - The field to aggregate by: "statusCode" | "host"
+ * @returns Promise resolving to an array of metric response objects
+ */
+export async function HTTPRequests(
+  token: string,
+  resources: string[],
+  hosts?: string[],
+  startTime?: string,
+  endTime?: string,
+  paths?: string[],
+  resolutionSeconds?: number,
+  aggregateBy?: "statusCode" | "host",
+) {
+  return await renderGet<MetricResponse[]>(token, `metrics/http-requests`, {
+    aggregateBy,
+    endTime,
+    host: hosts,
+    path: paths,
+    resolutionSeconds: resolutionSeconds?.toString(),
+    resource: resources,
+    startTime,
   });
 }
