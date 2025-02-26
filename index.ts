@@ -590,3 +590,46 @@ export async function memoryUsage(
     instance: instances,
   });
 }
+
+/** Return active connection count metrics for Postgres databases or Redis instances
+ *
+ * @see https://api-docs.render.com/reference/get-active-connections
+ *
+ * @param token - API token for authentication
+ * @param resources - Resource IDs to query (Postgres IDs or Redis IDs)
+ * @param startTime - timestamp of start of time range to return. Defaults to now() - 1 hour. Example: 2021-06-17T08:30:30Z
+ * @param endTime - timestamp of end of time range to return. Defaults to now(). Example: 2021-06-17T08:30:30Z
+ * @param resolutionSeconds - The resolution of the returned data in seconds. Must be ≥ 30. Defaults to 60.
+ * @returns Promise resolving to an array of metric response objects
+ */
+export async function activeConnections(
+  token: string,
+  resources: string[],
+  startTime?: string,
+  endTime?: string,
+  resolutionSeconds?: number,
+) {
+  // This call is only valid for redis and postgres ids
+  const validResources = resources.filter(
+    (id) => isRedisID(id) || isPostgresID(id),
+  );
+
+  // log any skipped IDs to the debug log
+  const skippedResources = resources.filter(
+    (id) => !isRedisID(id) && !isPostgresID(id),
+  );
+  if (skippedResources.length > 0) {
+    debug("skipping resources:", skippedResources);
+  }
+
+  return await renderGet<MetricResponse[]>(
+    token,
+    `metrics/active-connections`,
+    {
+      endTime: endTime,
+      resolutionSeconds: resolutionSeconds?.toString(),
+      resource: validResources,
+      startTime: startTime,
+    },
+  );
+}
