@@ -458,7 +458,7 @@ type PostgresStatus =
 type PostgresRole = "primary" | "replica";
 
 export interface Postgres {
-  id: string;
+  id: PostgresID;
   ipAllowList: PostgresIpAllowListItem[] | null;
   createdAt: string;
   updatedAt: string;
@@ -805,31 +805,18 @@ export async function memoryUsage(
  */
 export async function activeConnections(
   token: string,
-  resources: string[],
+  resources: (Redis | Postgres)[],
   startTime?: string,
   endTime?: string,
   resolutionSeconds?: number,
 ) {
-  // This call is only valid for redis and postgres ids
-  const validResources = resources.filter(
-    (id) => isRedisID(id) || isPostgresID(id),
-  );
-
-  // log any skipped IDs to the debug log
-  const skippedResources = resources.filter(
-    (id) => !isRedisID(id) && !isPostgresID(id),
-  );
-  if (skippedResources.length > 0) {
-    debug("skipping resources:", skippedResources);
-  }
-
   return await renderGet<MetricResponse[]>(
     token,
     `metrics/active-connections`,
     {
       endTime,
       resolutionSeconds: resolutionSeconds?.toString(),
-      resource: validResources,
+      resource: resources.map((res) => res.id),
       startTime,
     },
   );
