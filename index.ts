@@ -805,7 +805,7 @@ export async function memoryUsage(
  */
 export async function activeConnections(
   token: string,
-  resources: (Redis | Postgres)[],
+  resources: (RedisID | PostgresID)[],
   startTime?: string,
   endTime?: string,
   resolutionSeconds?: number,
@@ -816,7 +816,7 @@ export async function activeConnections(
     {
       endTime,
       resolutionSeconds: resolutionSeconds?.toString(),
-      resource: resources.map((res) => res.id),
+      resource: resources,
       startTime,
     },
   );
@@ -834,7 +834,7 @@ export async function activeConnections(
  */
 export async function bandwidth(
   token: string,
-  resources: string[],
+  resources: ServiceID[],
   startTime?: string,
   endTime?: string,
 ) {
@@ -870,7 +870,7 @@ export async function bandwidth(
  */
 export async function HTTPLatency(
   token: string,
-  resources: string[],
+  resources: ServiceID[],
   quantile: string,
   hosts?: string[],
   startTime?: string,
@@ -904,7 +904,7 @@ export async function HTTPLatency(
  */
 export async function HTTPRequests(
   token: string,
-  resources: string[],
+  resources: ServiceID[],
   hosts?: string[],
   startTime?: string,
   endTime?: string,
