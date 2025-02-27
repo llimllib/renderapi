@@ -340,6 +340,7 @@ type RedisOwner = {
   email: string;
   id: string;
   name: string;
+  twoFactorAuthEnabled?: boolean;
   type: string;
 };
 
@@ -421,6 +422,119 @@ export async function listRedis(
     redises = redises.filter((r) => r.name.match(nameFilter));
   }
   return redises;
+}
+
+type PostgresOwner = {
+  id: string;
+  name: string;
+  email: string;
+  twoFactorAuthEnabled?: boolean;
+  type: string;
+};
+
+type PostgresIpAllowListItem = {
+  cidrBlock: string;
+  description: string;
+};
+
+type PostgresReadReplica = {
+  id: string;
+  name: string;
+};
+
+type PostgresStatus =
+  | "creating"
+  | "available"
+  | "unavailable"
+  | "config_restart"
+  | "suspended"
+  | "maintenance_scheduled"
+  | "maintenance_in_progress"
+  | "recovery_failed"
+  | "recovery_in_progress"
+  | "unknown"
+  | "updating_instance";
+
+type PostgresRole = "primary" | "replica";
+
+export interface Postgres {
+  id: string;
+  ipAllowList: PostgresIpAllowListItem[] | null;
+  createdAt: string;
+  updatedAt: string;
+  expiresAt?: string;
+  databaseName: string;
+  databaseUser: string;
+  environmentId?: string;
+  highAvailabilityEnabled: boolean;
+  name: string;
+  owner: PostgresOwner;
+  plan: string;
+  diskSizeGB?: number;
+  primaryPostgresID?: string;
+  region: string;
+  readReplicas: PostgresReadReplica[];
+  role: PostgresRole;
+  status: PostgresStatus;
+  version: string;
+  suspended?: string;
+  suspenders?: string[];
+  dashboardUrl: string;
+}
+
+export interface PostgresCursor {
+  postgres: Postgres;
+  cursor: string;
+}
+
+/**
+ * Retrieves a list of PostgreSQL instances based on specified filters.
+ *
+ * @param token - Authentication token for API access
+ * @param nameFilter="" - Regular expression pattern to filter PostgreSQL instances by name
+ * @param region - Filter PostgreSQL instances by geographic region
+ * @param createdBefore - ISO 8601 timestamp to filter instances created before this time
+ * @param createdAfter - ISO 8601 timestamp to filter instances created after this time
+ * @param updatedBefore - ISO 8601 timestamp to filter instances updated before this time
+ * @param updatedAfter - ISO 8601 timestamp to filter instances updated after this time
+ * @param ownerID - Filter instances by owner ID (team or personal user)
+ * @param environmentID - Filter instances by environment ID
+ * @param suspended - Filter resources based on whether they're suspended or not suspended
+ * @param includeReplicas - Include replicas in the response. default true
+ *
+ * @returns Promise resolving to an array of PostgreSQL instances matching the filters
+ */
+export async function listPostgres(
+  token: string,
+  nameFilter: string = "",
+  region?: string,
+  createdBefore?: string,
+  createdAfter?: string,
+  updatedBefore?: string,
+  updatedAfter?: string,
+  ownerID?: string,
+  environmentID?: string,
+  suspended?: string,
+  includeReplicas?: "true" | "false",
+): Promise<Postgres[]> {
+  const postgresObjs = await renderGetPaged<PostgresCursor>(token, "postgres", {
+    region,
+    createdBefore,
+    createdAfter,
+    updatedBefore,
+    updatedAfter,
+    ownerID,
+    environmentID,
+    suspended,
+    includeReplicas,
+  });
+  let postgresInstances = postgresObjs.map((p) => p.postgres);
+  if (nameFilter !== "") {
+    postgresInstances = postgresInstances.filter((p) =>
+      p.name.match(nameFilter),
+    );
+  }
+  return postgresInstances;
 }
 
 export async function determineService(
