@@ -318,7 +318,11 @@ export async function getService(
  * name matches. This does not use the render filter parameter because only
  * exact matches are supported with that filter.
  *
- * https://api-docs.render.com/reference/list-services
+ * @see: https://api-docs.render.com/reference/list-services
+ *
+ * @param token - API token for authentication
+ * @param nameFilter - regular expression for matching service names
+ * @returns Promise resolving to an array of Service objects
  */
 export async function getServices(
   token: string,
@@ -330,6 +334,93 @@ export async function getServices(
     services = services.filter((s) => s.name.match(nameFilter));
   }
   return services;
+}
+
+type RedisOwner = {
+  email: string;
+  id: string;
+  name: string;
+  type: string;
+};
+
+type RedisOptions = {
+  maxmemoryPolicy: string;
+};
+
+type RedisStatus =
+  | "creating"
+  | "available"
+  | "unavailable"
+  | "config_restart"
+  | "suspended"
+  | "maintenance_scheduled"
+  | "maintenance_in_progress"
+  | "recovery_failed"
+  | "recovery_in_progress"
+  | "unknown"
+  | "updating_instance";
+
+export interface Redis {
+  createdAt: string;
+  dashboardUrl: string;
+  environmentId: string;
+  id: RedisID;
+  ipAllowList: string[] | null;
+  name: string;
+  options: RedisOptions;
+  owner: RedisOwner;
+  plan: string;
+  region: string;
+  status: RedisStatus;
+  updatedAt: string;
+  version: string;
+}
+
+export interface RedisCursor {
+  cursor: string;
+  redis: Redis;
+}
+
+/**
+ * Retrieves a list of Redis instances based on specified filters.
+ *
+ * @param token - Authentication token for API access
+ * @param nameFilter="" - Regular expression pattern to filter Redis instances by name
+ * @param region - Filter Redis instances by geographic region
+ * @param createdBefore - ISO 8601 timestamp to filter instances created before this time
+ * @param createdAfter - ISO 8601 timestamp to filter instances created after this time
+ * @param updatedBefore - ISO 8601 timestamp to filter instances updated before this time
+ * @param updatedAfter - ISO 8601 timestamp to filter instances updated after this time
+ * @param ownerID - Filter instances by owner ID (team or personal user)
+ * @param environmentID - Filter instances by environment ID
+ *
+ * @returns Promise resolving to an array of Redis instances matching the filters
+ */
+export async function listRedis(
+  token: string,
+  nameFilter: string = "",
+  region?: string,
+  createdBefore?: string,
+  createdAfter?: string,
+  updatedBefore?: string,
+  updatedAfter?: string,
+  ownerID?: string,
+  environmentID?: string,
+): Promise<Redis[]> {
+  const redisObjs = await renderGetPaged<RedisCursor>(token, "redis", {
+    region,
+    createdBefore,
+    createdAfter,
+    updatedBefore,
+    updatedAfter,
+    ownerID,
+    environmentID,
+  });
+  let redises = redisObjs.map((r) => r.redis);
+  if (nameFilter !== "") {
+    redises = redises.filter((r) => r.name.match(nameFilter));
+  }
+  return redises;
 }
 
 export async function determineService(
